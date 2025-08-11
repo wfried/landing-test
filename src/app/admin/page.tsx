@@ -1,4 +1,6 @@
+"use client";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 type Summary = {
   ok: boolean;
@@ -9,20 +11,47 @@ type Summary = {
   recentLeads: Array<{ ts: string; email: string; attraction: string; variant: string; utm_source?: string; utm_campaign?: string }>;
 };
 
-async function fetchSummary(): Promise<Summary | { ok: false }> {
-  const url = process.env.LEAD_WEBHOOK_URL?.replace(/\/$/, "") + "/admin/summary";
-  const token = process.env.LEAD_WEBHOOK_TOKEN;
-  const res = await fetch(url!, { headers: token ? { Authorization: `Bearer ${token}` } : {} , cache: "no-store" });
-  if (!res.ok) return { ok: false };
-  return res.json();
-}
+export default function AdminPage() {
+  const [pwd, setPwd] = useState<string>("");
+  const [authed, setAuthed] = useState<boolean>(false);
+  const [data, setData] = useState<Summary | { ok: false } | null>(null);
 
-export default async function AdminPage() {
-  const data = await fetchSummary();
+  async function loadSummary(password: string) {
+    const base = (process.env.NEXT_PUBLIC_LEAD_WEBHOOK_URL || "").replace(/\/$/, "");
+    const res = await fetch(`${base}/admin/summary`, { headers: { Authorization: `Bearer ${password}` }, cache: "no-store" });
+    if (!res.ok) {
+      setData({ ok: false });
+      return false;
+    }
+    const json = await res.json();
+    setData(json);
+    return true;
+  }
+
+  useEffect(() => {
+    const saved = typeof window !== "undefined" ? window.localStorage.getItem("admin_pwd") : "";
+    if (saved) {
+      setPwd(saved);
+      loadSummary(saved).then((ok) => setAuthed(ok));
+    }
+  }, []);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const ok = await loadSummary(pwd);
+    setAuthed(ok);
+    if (ok && typeof window !== "undefined") window.localStorage.setItem("admin_pwd", pwd);
+  }
   return (
     <main className="px-6 sm:px-8 py-12 max-w-5xl mx-auto">
       <h1 className="text-2xl font-semibold text-slate-900">Admin</h1>
-      {!data?.ok ? (
+      {!authed ? (
+        <form onSubmit={onSubmit} className="mt-6 max-w-sm">
+          <label className="block text-sm font-medium text-slate-700">Password</label>
+          <input value={pwd} onChange={(e) => setPwd(e.target.value)} type="password" className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" />
+          <button className="mt-3 rounded-lg bg-slate-900 text-white px-5 py-2">Enter</button>
+        </form>
+      ) : !data?.ok ? (
         <p className="mt-4 text-slate-700">Could not load summary.</p>
       ) : (
         <div className="mt-6 grid gap-6">
@@ -74,7 +103,7 @@ export default async function AdminPage() {
             </table>
           </div>
           <div className="text-right">
-            <Link href={(process.env.LEAD_WEBHOOK_URL?.replace(/\/$/, "") || "") + "/admin/leads.csv"} className="text-sm text-slate-700 underline">Download CSV</Link>
+            <Link href={((process.env.NEXT_PUBLIC_LEAD_WEBHOOK_URL || "").replace(/\/$/, "")) + "/admin/leads.csv"} className="text-sm text-slate-700 underline" prefetch={false}>Download CSV</Link>
           </div>
         </div>
       )}
