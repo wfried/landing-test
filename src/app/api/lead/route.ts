@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
-import { nanoid } from "nanoid";
 import { z } from "zod";
+
+export const runtime = 'edge';
 
 // Simple in-memory rate limiter and origin check (per instance)
 const ipHits: Map<string, number[]> = new Map();
@@ -82,7 +83,7 @@ export async function POST(req: Request) {
   const variantCookie = (jar.get("ab_variant")?.value as "a" | "b" | undefined);
 
   const body = {
-    id: nanoid(),
+    id: crypto.randomUUID(),
     ts: new Date().toISOString(),
     type: "lead",
     ...payload,

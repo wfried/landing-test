@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { nanoid } from "nanoid";
 import { z } from "zod";
 import { cookies, headers } from "next/headers";
+
+export const runtime = 'edge';
 
 // Simple in-memory limiter (per instance)
 const ipHits: Map<string, number[]> = new Map();
@@ -65,7 +66,7 @@ export async function POST(req: Request) {
     ? Number(process.env.PRICE_VARIANT_A || 9)
     : Number(process.env.PRICE_VARIANT_B || 15);
   const body = {
-    id: nanoid(),
+    id: crypto.randomUUID(),
     ts: new Date().toISOString(),
     type: "intent",
     variant,

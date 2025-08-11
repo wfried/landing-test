@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import PriceIntent from "@/components/PriceIntent";
 
+export const runtime = 'edge';
+
 export default async function ThankYou() {
   // Compute canonical variant/price on the server
   const jar = await cookies();

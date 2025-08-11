@@ -5,6 +5,8 @@ import LeadForm from "@/components/LeadForm";
 import { persistUtmFromRequest } from "@/lib/utm";
 import { cookies, headers } from "next/headers";
 
+export const runtime = 'edge';
+
 async function pickVariant(): Promise<"a" | "b"> {
   const hdrs = await headers();
   const url = new URL(hdrs.get("x-url") || "http://local/");
