@@ -94,7 +94,15 @@ export async function POST(req: Request) {
   const url = process.env.LEAD_WEBHOOK_URL;
   if (url) {
     try {
-      await fetch(url, { method: "POST", headers: { "Content-Type":"application/json" }, body: JSON.stringify(body) });
+      const token = process.env.LEAD_WEBHOOK_TOKEN;
+      await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type":"application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body),
+      });
     } catch (e) {
       console.error("Webhook error", e);
     }
